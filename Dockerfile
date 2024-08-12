@@ -1,6 +1,9 @@
 # Configurar el directorio de trabajo
 WORKDIR /app
 
+# Etapa de construcción
+FROM golang:1.22.5 AS builder
+
 # Copiar el archivo go.mod y go.sum e instalar dependencias
 COPY go.mod go.sum ./
 RUN go mod download
