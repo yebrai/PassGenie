@@ -3,18 +3,19 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*' # Push events to matching v*, e.g., v1.0, v20.15.10
 
 jobs:
   build:
+    name: Build and Release
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3 # Actualizado a la versión v3
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v3 # Actualizado a la versión v3
         with:
           go-version: '1.20'
 
@@ -27,8 +28,9 @@ jobs:
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
-        with:
+        env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+        with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
@@ -38,9 +40,11 @@ jobs:
           prerelease: false
 
       - name: Upload Release Asset
+        id: upload-release-asset
         uses: actions/upload-release-asset@v1
-        with:
+        env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+        with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./passgenie
           asset_name: passgenie
