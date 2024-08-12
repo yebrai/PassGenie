@@ -3,49 +3,65 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # Coincide con etiquetas como v1.0.0
+      - 'v*' # Push events to matching v*, e.g., v1.0, v20.15.10
 
 jobs:
   build:
+    name: Build and Release
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v3
         with:
           go-version: '1.20'
 
-      - name: Build for Windows
-        run: GOOS=windows GOARCH=amd64 go build -o passgenie.exe ./cmd/passgenie
-
       - name: Build for Linux
-        run: GOOS=linux GOARCH=amd64 go build -o passgenie ./cmd/passgenie
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o passgenie-linux ./cmd/passgenie
+
+      - name: Build for Windows
+        run: |
+          GOOS=windows GOARCH=amd64 go build -o passgenie-windows.exe ./cmd/passgenie
+
+      - name: Test
+        run: go test -v ./...
 
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this release:
+            - Build and release of version ${{ github.ref }}
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Windows Release Asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./passgenie.exe
-          asset_name: passgenie.exe
-          asset_content_type: application/octet-stream
 
       - name: Upload Linux Release Asset
+        id: upload-linux-release-asset
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./passgenie
-          asset_name: passgenie
+          asset_path: ./passgenie-linux
+          asset_name: passgenie-linux
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows Release Asset
+        id: upload-windows-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./passgenie-windows.exe
+          asset_name: passgenie-windows.exe
           asset_content_type: application/octet-stream
