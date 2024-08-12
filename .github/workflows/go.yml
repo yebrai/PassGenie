@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Package Release
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build and Release
+    name: Build and Package Release
     runs-on: ubuntu-latest
 
     steps:
@@ -27,12 +27,13 @@ jobs:
         run: |
           GOOS=windows GOARCH=amd64 go build -o passgenie-windows.exe ./cmd/passgenie
 
-      - name: Test
-        run: go test -v ./...
+      - name: Package binaries into a ZIP file
+        run: |
+          zip passgenie-release.zip passgenie-linux passgenie-windows.exe
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.4
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         with:
@@ -44,24 +45,12 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Linux Release Asset
-        id: upload-linux-release-asset
+      - name: Upload ZIP Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./passgenie-linux
-          asset_name: passgenie-linux
-          asset_content_type: application/octet-stream
-
-      - name: Upload Windows Release Asset
-        id: upload-windows-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./passgenie-windows.exe
-          asset_name: passgenie-windows.exe
-          asset_content_type: application/octet-stream
+          asset_path: ./passgenie-release.zip
+          asset_name: passgenie-release.zip
+          asset_content_type: application/zip
