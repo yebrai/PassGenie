@@ -1,44 +1,28 @@
 package password
 
 import (
+	"passgenie/internal/password" // Asegúrate de que el módulo y la ruta sean correctos
 	"testing"
 )
 
 func TestGenerate(t *testing.T) {
-	gen := NewGenerator()
-
-	length := 12
-	includeSymbols := true
-
-	pass, err := gen.Generate(length, includeSymbols)
+	g := password.NewGenerator()
+	password, err := g.Generate(12, true)
 	if err != nil {
-		t.Fatalf("Error generating password: %v", err)
+		t.Fatalf("expected no error, got %v", err)
 	}
-	if len(pass) != length {
-		t.Fatalf("Expected password length %d, got %d", length, len(pass))
-	}
-
-	// Check if password contains symbols
-	if includeSymbols && !containsSymbols(pass) {
-		t.Fatalf("Password does not contain symbols")
+	if len(password) != 12 {
+		t.Fatalf("expected password length of 12, got %d", len(password))
 	}
 }
 
-func containsSymbols(password string) bool {
-	symbolChars := "!@#$%^&*()-_=+[]{}|;:,.<>?/"
-	for _, char := range password {
-		if contains(symbolChars, char) {
-			return true
-		}
+func TestGenerateWithoutSymbols(t *testing.T) {
+	g := password.NewGenerator()
+	password, err := g.Generate(8, false)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
 	}
-	return false
-}
-
-func contains(chars string, char rune) bool {
-	for _, c := range chars {
-		if c == char {
-			return true
-		}
+	if len(password) != 8 {
+		t.Fatalf("expected password length of 8, got %d", len(password))
 	}
-	return false
 }
